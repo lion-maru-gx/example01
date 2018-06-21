@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -21,6 +22,7 @@ import jp.gr.java_conf.lion_maru_gx.example.common.MidiUtil;
 
 /**
  * メイン画面
+ * 
  * @author lion-maru-gx
  *
  */
@@ -48,19 +50,18 @@ public class MainController implements Initializable {
 
 		outputChoice.addEventHandler(ActionEvent.ACTION, outputChoiceChanged);
 
-       Timeline timer = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-            	String msg = MidiUtil.getInputMessages();
-            	if(msg.length() > 0){
-            		log.appendText(msg);
-            	}
-            }
-        }));
+		Timeline timer = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				String msg = MidiUtil.getInputMessages();
+				if (msg.length() > 0) {
+					log.appendText(msg);
+				}
+			}
+		}));
 
-        timer.setCycleCount(Timeline.INDEFINITE);
-        timer.play();
-
+		timer.setCycleCount(Animation.INDEFINITE);
+		timer.play();
 
 		// 正規表現のパターンを作成
 		Pattern hexPattern = Pattern.compile("[^0-9a-fA-F]+");
@@ -96,13 +97,13 @@ public class MainController implements Initializable {
 	@SuppressWarnings("unchecked")
 	private void inputChoiceChanged(ActionEvent e) {
 		ChoiceBox<String> c = (ChoiceBox<String>) e.getSource();
-		MidiUtil.setInputPort((String) c.getValue());
+		MidiUtil.setInputPort(c.getValue());
 	}
 
 	private void outputChoiceChanged(ActionEvent e) {
 		@SuppressWarnings("unchecked")
 		ChoiceBox<String> c = (ChoiceBox<String>) e.getSource();
-		MidiUtil.setOutputPort( (String) c.getValue());
+		MidiUtil.setOutputPort(c.getValue());
 	}
 
 }

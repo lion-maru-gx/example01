@@ -55,8 +55,8 @@ public class MidiUtil {
 		}
 
 		// MIDI入力メッセージ
-		//receiver = new MessageReceiver(inputMessages);
-		receiver = new Receiver(){
+		// receiver = new MessageReceiver(inputMessages);
+		receiver = new Receiver() {
 
 			@Override
 			public void close() {
@@ -68,7 +68,7 @@ public class MidiUtil {
 				if (message == null) {
 					return;
 				}
-				System.out.println((byte) message.getMessage()[0]);
+				System.out.println(message.getMessage()[0]);
 				if (message.getMessage()[0] == (byte) 0xf8) {
 					return;
 				}
@@ -103,7 +103,7 @@ public class MidiUtil {
 					&& !EMULATE_NO_MIDI_IN)
 				list.add(infos[i]);
 		}
-		return (MidiDevice.Info[]) list.toArray(new MidiDevice.Info[0]);
+		return list.toArray(new MidiDevice.Info[0]);
 	}
 
 	/**
@@ -123,7 +123,7 @@ public class MidiUtil {
 					&& !EMULATE_NO_MIDI_OUT)
 				list.add(infos[i]);
 		}
-		return (MidiDevice.Info[]) list.toArray(new MidiDevice.Info[0]);
+		return list.toArray(new MidiDevice.Info[0]);
 	}
 
 	/**
@@ -347,6 +347,7 @@ public class MidiUtil {
 		}
 		return msg;
 	}
+
 	/**
 	 *
 	 */
@@ -356,8 +357,8 @@ public class MidiUtil {
 				outputPort.close();
 			}
 		}
-		if(inputPort != null) {
-			if(inputPort.isOpen()) {
+		if (inputPort != null) {
+			if (inputPort.isOpen()) {
 				inputPort.close();
 			}
 		}
@@ -385,6 +386,5 @@ public class MidiUtil {
 			e.printStackTrace();
 		}
 	}
-
 
 }
