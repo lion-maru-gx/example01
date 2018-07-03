@@ -57,6 +57,8 @@ public class Main extends Application {
 	@Override
 	public void stop() throws Exception {
 		MidiUtil.close();
+		prop.setProperty("inputDevice", MidiUtil.getInputDeviceName());
+		prop.setProperty("outputDevice", MidiUtil.getOutputDeviceName());
 		OutputStream ostream = new FileOutputStream(configFile);
 		prop.storeToXML(ostream, "");;
 		ostream.close();

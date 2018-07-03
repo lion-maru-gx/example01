@@ -387,4 +387,17 @@ public class MidiUtil {
 		}
 	}
 
+	public static String getInputDeviceName() {
+		if (inputPort != null) {
+			return inputPort.getDeviceInfo().getName();
+		}
+		return "";
+	}
+
+	public static String getOutputDeviceName() {
+		if (outputPort != null) {
+			return outputPort.getDeviceInfo().getName();
+		}
+		return "";
+	}
 }
