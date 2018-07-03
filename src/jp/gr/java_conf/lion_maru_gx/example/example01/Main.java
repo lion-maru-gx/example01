@@ -1,5 +1,11 @@
 package jp.gr.java_conf.lion_maru_gx.example.example01;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.InvalidPropertiesFormatException;
 import java.util.Properties;
 
 import javafx.application.Application;
@@ -11,7 +17,7 @@ import jp.gr.java_conf.lion_maru_gx.example.common.MidiUtil;
 
 /**
  * MIDI Monitor
- * 
+ *
  * @author lion-maru-gx
  *
  */
@@ -34,19 +40,26 @@ public class Main extends Application {
 
 	public static void main(String[] args) {
 		prop = new Properties();
-		/**
-		 * try { prop.loadFromXML(new FileInputStream(configFile)); } catch
-		 * (InvalidPropertiesFormatException e1) { // TODO 自動生成された catch ブロック
-		 * e1.printStackTrace(); } catch (FileNotFoundException e1) { // TODO
-		 * 自動生成された catch ブロック e1.printStackTrace(); } catch (IOException e1) {
-		 * // TODO 自動生成された catch ブロック e1.printStackTrace(); }
-		 **/
+
+		try {
+			prop.loadFromXML(new FileInputStream(configFile));
+		} catch (InvalidPropertiesFormatException e1) {
+			e1.printStackTrace();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+
 		launch(args);
 	}
 
 	@Override
 	public void stop() throws Exception {
 		MidiUtil.close();
+		OutputStream ostream = new FileOutputStream(configFile);
+		prop.storeToXML(ostream, "");;
+		ostream.close();
 		super.stop();
 	}
 
