@@ -54,22 +54,20 @@ public class MainController implements Initializable {
 		// 入力デバイスChoiceBoxの初期化
 		inputChoice.setItems(FXCollections.observableArrayList(MidiUtil.getInputNames()));
 		// 選択時の処理を追加
-		EventHandler<ActionEvent> inputChoiceChanged = (event) ->{
+		inputChoice.addEventHandler(ActionEvent.ACTION, (event) ->{
 			@SuppressWarnings("unchecked")
 			ChoiceBox<String> c = (ChoiceBox<String>) event.getSource();
 			MidiUtil.setInputDeviceName(c.getValue());
-		};
-		inputChoice.addEventHandler(ActionEvent.ACTION, inputChoiceChanged);
+		});
 
 		// 出力デバイスChoiceBoxの初期化
 		outputChoice.setItems(FXCollections.observableArrayList(MidiUtil.getOutputNames()));
 		// 選択時の処理を追加
-		EventHandler<ActionEvent> outputChoiceChanged = (event) ->{
+		outputChoice.addEventHandler(ActionEvent.ACTION, (event) ->{
 			@SuppressWarnings("unchecked")
 			ChoiceBox<String> c = (ChoiceBox<String>) event.getSource();
 			MidiUtil.setOutputDeviceName(c.getValue());
-		};
-		outputChoice.addEventHandler(ActionEvent.ACTION, outputChoiceChanged);
+		});
 
 		// 送信メッセージ入力TextFieldの初期化
 		// 正規表現のパターンを作成(16進)
@@ -101,7 +99,7 @@ public class MainController implements Initializable {
 	}
 
 	/**
-	 *
+	 * 終了ボタン処理
 	 */
 	@FXML
 	public void handleExit() {
@@ -110,7 +108,7 @@ public class MainController implements Initializable {
 	}
 
 	/**
-	 *
+	 * 送信ボタン処理
 	 */
 	@FXML
 	public void handleSend() {
