@@ -22,7 +22,13 @@ import jp.gr.java_conf.lion_maru_gx.example.common.MidiUtil;
  *
  */
 public class Main extends Application {
+	/**
+	 * Systemプロパティ
+	 */
 	private static Properties prop;
+	/**
+	 * プロパティファイル名
+	 */
 	private static final String configFile = "config.xml";
 
 	@Override
@@ -39,8 +45,8 @@ public class Main extends Application {
 	}
 
 	public static void main(String[] args) {
+		//プロパティファイルの読込み
 		prop = new Properties();
-
 		try {
 			prop.loadFromXML(new FileInputStream(configFile));
 		} catch (InvalidPropertiesFormatException e1) {
@@ -54,14 +60,17 @@ public class Main extends Application {
 		launch(args);
 	}
 
+	/**
+	 * 終了処理
+	 */
 	@Override
 	public void stop() throws Exception {
-		MidiUtil.close();
 		prop.setProperty("inputDevice", MidiUtil.getInputDeviceName());
 		prop.setProperty("outputDevice", MidiUtil.getOutputDeviceName());
 		OutputStream ostream = new FileOutputStream(configFile);
 		prop.storeToXML(ostream, "");;
 		ostream.close();
+		MidiUtil.close();
 		super.stop();
 	}
 
@@ -76,8 +85,8 @@ public class Main extends Application {
 
 	/**
 	 * Property値を取得します。
-	 *
-	 * @return prop
+	 * @param key キー値
+	 * @return Property値
 	 */
 	public static String getProperty(String key) {
 		return prop.getProperty(key);
