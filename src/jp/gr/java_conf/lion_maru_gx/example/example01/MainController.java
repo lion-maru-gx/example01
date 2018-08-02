@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -20,49 +21,56 @@ import javafx.util.Duration;
 import jp.gr.java_conf.lion_maru_gx.example.common.MidiUtil;
 
 /**
- * メイン画面
+ * メイン画面処理
+ *
  * @author lion-maru-gx
  *
  */
 public class MainController implements Initializable {
-	@FXML
-	TextArea log;
-
+	/**
+	 * 入力デバイスChoiceBox
+	 */
 	@FXML
 	ChoiceBox<String> inputChoice;
+	/**
+	 * 出力デバイスChoiceBox
+	 */
 	@FXML
 	ChoiceBox<String> outputChoice;
+	/**
+	 * 送信メッセージ入力TextField
+	 */
 	@FXML
 	TextField sendText;
+	/**
+	 * 受信メッセージ出力TextArea
+	 */
+	@FXML
+	TextArea log;
 
 	@Override
 	public void initialize(URL arg0, ResourceBundle arg1) {
 
+		// 入力デバイスChoiceBoxの初期化
 		inputChoice.setItems(FXCollections.observableArrayList(MidiUtil.getInputNames()));
+		// 選択時の処理を追加
+		inputChoice.addEventHandler(ActionEvent.ACTION, (event) ->{
+			@SuppressWarnings("unchecked")
+			ChoiceBox<String> c = (ChoiceBox<String>) event.getSource();
+			MidiUtil.setInputDeviceName(c.getValue());
+		});
 
-		EventHandler<ActionEvent> inputChoiceChanged = (event) -> this.inputChoiceChanged(event);
-
-		inputChoice.addEventHandler(ActionEvent.ACTION, inputChoiceChanged);
+		// 出力デバイスChoiceBoxの初期化
 		outputChoice.setItems(FXCollections.observableArrayList(MidiUtil.getOutputNames()));
-		EventHandler<ActionEvent> outputChoiceChanged = (event) -> this.outputChoiceChanged(event);
+		// 選択時の処理を追加
+		outputChoice.addEventHandler(ActionEvent.ACTION, (event) ->{
+			@SuppressWarnings("unchecked")
+			ChoiceBox<String> c = (ChoiceBox<String>) event.getSource();
+			MidiUtil.setOutputDeviceName(c.getValue());
+		});
 
-		outputChoice.addEventHandler(ActionEvent.ACTION, outputChoiceChanged);
-
-       Timeline timer = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent event) {
-            	String msg = MidiUtil.getInputMessages();
-            	if(msg.length() > 0){
-            		log.appendText(msg);
-            	}
-            }
-        }));
-
-        timer.setCycleCount(Timeline.INDEFINITE);
-        timer.play();
-
-
-		// 正規表現のパターンを作成
+		// 送信メッセージ入力TextFieldの初期化
+		// 正規表現のパターンを作成(16進)
 		Pattern hexPattern = Pattern.compile("[^0-9a-fA-F]+");
 		TextFormatter<String> lowerFormatter = new TextFormatter<>(change -> {
 			String newStr = hexPattern.matcher(change.getText()).replaceAll("");
@@ -73,17 +81,38 @@ public class MainController implements Initializable {
 			return change;
 		});
 		sendText.setTextFormatter(lowerFormatter);
+
+		// メッセージ受信をタイマーで監視
+		Timeline timer = new Timeline(new KeyFrame(Duration.millis(100), new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				String msg = MidiUtil.getInputMessages();
+				if (msg.length() > 0) {
+					log.appendText(msg);
+				}
+			}
+		}));
+
+		timer.setCycleCount(Animation.INDEFINITE);
+		timer.play();
+
 	}
 
+	/**
+	 * 終了ボタン処理
+	 */
 	@FXML
 	public void handleExit() {
 		MidiUtil.close();
 		Platform.exit();
 	}
 
+	/**
+	 * 送信ボタン処理
+	 */
 	@FXML
 	public void handleSend() {
-		if (MidiUtil.getOutputPort() == null) {
+		if (MidiUtil.getOutputDevice() == null) {
 			return;
 		}
 		String text = sendText.getText();
@@ -91,18 +120,6 @@ public class MainController implements Initializable {
 			MidiUtil.sendMessage(text);
 		}
 
-	}
-
-	@SuppressWarnings("unchecked")
-	private void inputChoiceChanged(ActionEvent e) {
-		ChoiceBox<String> c = (ChoiceBox<String>) e.getSource();
-		MidiUtil.setInputPort((String) c.getValue());
-	}
-
-	private void outputChoiceChanged(ActionEvent e) {
-		@SuppressWarnings("unchecked")
-		ChoiceBox<String> c = (ChoiceBox<String>) e.getSource();
-		MidiUtil.setOutputPort( (String) c.getValue());
 	}
 
 }

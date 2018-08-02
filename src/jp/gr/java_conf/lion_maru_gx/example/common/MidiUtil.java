@@ -22,41 +22,30 @@ import javax.xml.bind.DatatypeConverter;
  *
  */
 public class MidiUtil {
-	private static MidiDevice.Info[] outputMidiDeviceInfo;
-	private static MidiDevice.Info[] inputMidiDeviceInfo;
-
-	private static String[] outputNames;
-	private static String[] inputNames;
-
+	/**
+	 * 入力デバイス
+	 */
+	private static MidiDevice inputDevice = null;
+	/**
+	 * 出力デバイス
+	 */
+	private static MidiDevice outputDevice = null;
+	/**
+	 * 入力レシーバ
+	 */
 	private static Receiver receiver;
-	private static MidiDevice inputPort = null;
-	private static MidiDevice outputPort = null;
+	/**
+	 * 入力メッセージキュー
+	 */
 	private static LinkedList<MidiMessage> inputMessages = new LinkedList<>();
 
 	/**
 	 * staticの初期化
 	 */
 	static {
-		try {
-			outputMidiDeviceInfo = createOutputMidiDeviceInfo();
-			inputMidiDeviceInfo = createInputMidiDeviceInfo();
 
-			outputNames = new String[outputMidiDeviceInfo.length];
-			for (int i = 0; i < outputMidiDeviceInfo.length; i++) {
-				outputNames[i] = outputMidiDeviceInfo[i].getName();
-			}
-
-			inputNames = new String[inputMidiDeviceInfo.length];
-			for (int i = 0; i < inputMidiDeviceInfo.length; i++) {
-				inputNames[i] = inputMidiDeviceInfo[i].getName();
-			}
-		} catch (MidiUnavailableException e) {
-			e.printStackTrace();
-		}
-
-		// MIDI入力メッセージ
-		//receiver = new MessageReceiver(inputMessages);
-		receiver = new Receiver(){
+		// MIDI入力用レシーバの定義
+		receiver = new Receiver() {
 
 			@Override
 			public void close() {
@@ -68,7 +57,7 @@ public class MidiUtil {
 				if (message == null) {
 					return;
 				}
-				System.out.println((byte) message.getMessage()[0]);
+				System.out.println(message.getMessage()[0]);
 				if (message.getMessage()[0] == (byte) 0xf8) {
 					return;
 				}
@@ -82,91 +71,89 @@ public class MidiUtil {
 		};
 
 	}
-	/** emulate the no MIDI device condition for debugging */
-	private final static boolean EMULATE_NO_MIDI_IN = false;
-	private final static boolean EMULATE_NO_MIDI_OUT = false;
 
 	/**
-	 * 入力デバイス取得
-	 *
-	 * @return
-	 * @throws MidiUnavailableException
-	 */
-	private static MidiDevice.Info[] createInputMidiDeviceInfo() throws MidiUnavailableException {
-		ArrayList<MidiDevice.Info> list = new ArrayList<>();
-
-		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-		for (int i = 0; i < infos.length; i++) {
-			// throws MidiUnavailableException
-			MidiDevice device = MidiSystem.getMidiDevice(infos[i]);
-			if (device.getMaxTransmitters() != 0 && !(device instanceof Synthesizer) && !(device instanceof Sequencer)
-					&& !EMULATE_NO_MIDI_IN)
-				list.add(infos[i]);
-		}
-		return (MidiDevice.Info[]) list.toArray(new MidiDevice.Info[0]);
-	}
-
-	/**
-	 * 出力デバイス取得
-	 *
-	 * @return
-	 * @throws MidiUnavailableException
-	 */
-	private static MidiDevice.Info[] createOutputMidiDeviceInfo() throws MidiUnavailableException {
-		ArrayList<MidiDevice.Info> list = new ArrayList<>();
-
-		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
-		for (int i = 0; i < infos.length; i++) {
-			// throws MidiUnavailableException
-			MidiDevice device = MidiSystem.getMidiDevice(infos[i]);
-			if (device.getMaxReceivers() != 0 && !(device instanceof Synthesizer) && !(device instanceof Sequencer)
-					&& !EMULATE_NO_MIDI_OUT)
-				list.add(infos[i]);
-		}
-		return (MidiDevice.Info[]) list.toArray(new MidiDevice.Info[0]);
-	}
-
-	/**
-	 * 出力デバイス取得
+	 * 出力デバイス情報リスト取得
 	 *
 	 * @return
 	 */
 	public static MidiDevice.Info[] getOutputMidiDeviceInfo() {
-		return outputMidiDeviceInfo;
+		ArrayList<MidiDevice.Info> list = new ArrayList<>();
+
+		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+		for (int i = 0; i < infos.length; i++) {
+			// throws MidiUnavailableException
+			try {
+				MidiDevice device = MidiSystem.getMidiDevice(infos[i]);
+				if (device.getMaxReceivers() != 0 && !(device instanceof Synthesizer) && !(device instanceof Sequencer))
+					list.add(infos[i]);
+			} catch (MidiUnavailableException e) {
+				e.printStackTrace();
+			}
+		}
+		return list.toArray(new MidiDevice.Info[0]);
 	}
 
 	/**
-	 * 入力デバイス取得
+	 * 入力デバイス情報リストの取得
 	 *
-	 * @return
+	 * @return デバイス情報リスト
 	 */
 	public static MidiDevice.Info[] getInputMidiDeviceInfo() {
-		return inputMidiDeviceInfo;
+		ArrayList<MidiDevice.Info> list = new ArrayList<>();
+
+		MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+		for (int i = 0; i < infos.length; i++) {
+			// throws MidiUnavailableException
+			try {
+				MidiDevice device = MidiSystem.getMidiDevice(infos[i]);
+				if (device.getMaxTransmitters() != 0 && !(device instanceof Synthesizer)
+						&& !(device instanceof Sequencer))
+					list.add(infos[i]);
+			} catch (MidiUnavailableException e) {
+				e.printStackTrace();
+			}
+		}
+		return list.toArray(new MidiDevice.Info[0]);
 	}
 
 	/**
+	 * 出力デバイス名リストの取得
 	 *
-	 * @return
+	 * @return デバイス名リスト
 	 */
 	public static String[] getOutputNames() {
+		MidiDevice.Info[] outputMidiDeviceInfo = getOutputMidiDeviceInfo();
+		String[] outputNames = new String[outputMidiDeviceInfo.length];
+		for (int i = 0; i < outputMidiDeviceInfo.length; i++) {
+			outputNames[i] = outputMidiDeviceInfo[i].getName();
+		}
 		return outputNames;
 	}
 
 	/**
+	 * 入力デバイス名リストの取得
 	 *
-	 * @return
+	 * @return デバイス名リスト
 	 */
 	public static String[] getInputNames() {
+		MidiDevice.Info[] inputMidiDeviceInfo = getInputMidiDeviceInfo();
+		String[] inputNames = new String[inputMidiDeviceInfo.length];
+		for (int i = 0; i < inputMidiDeviceInfo.length; i++) {
+			inputNames[i] = inputMidiDeviceInfo[i].getName();
+		}
 		return inputNames;
 	}
 
 	/**
+	 * 入力デバイスの取得
 	 *
 	 * @param deviceName
-	 * @return
+	 *            デバイス名
+	 * @return デバイス名リスト
 	 */
 	public static MidiDevice getInputMidiDevice(String deviceName) {
-		for (MidiDevice.Info info : inputMidiDeviceInfo) {
+		for (MidiDevice.Info info : getInputMidiDeviceInfo()) {
 			if (info.getName().equals(deviceName)) {
 				try {
 					return MidiSystem.getMidiDevice(info);
@@ -181,12 +168,14 @@ public class MidiUtil {
 	}
 
 	/**
+	 * 出力デバイスの取得
 	 *
 	 * @param deviceName
-	 * @return
+	 *            デバイス名
+	 * @return デバイス
 	 */
 	public static MidiDevice getOutputMidiDevice(String deviceName) {
-		for (MidiDevice.Info info : outputMidiDeviceInfo) {
+		for (MidiDevice.Info info : getOutputMidiDeviceInfo()) {
 			if (info.getName().equals(deviceName)) {
 				try {
 					return MidiSystem.getMidiDevice(info);
@@ -201,70 +190,87 @@ public class MidiUtil {
 	}
 
 	/**
+	 * 入力デバイスの取得
 	 *
-	 * @return
+	 * @return デバイス
 	 */
-	public static MidiDevice getInputPort() {
-		return inputPort;
+	public static MidiDevice getInputDevice() {
+		return inputDevice;
 	}
 
 	/**
+	 * 入力デバイスの設定
 	 *
-	 * @param iInputPort
+	 * @param midiDevice
 	 */
-	public static void setInputPort(MidiDevice iInputPort) {
-		inputPort = iInputPort;
-		if (!inputPort.isOpen()) {
+	public static void setInputDevice(MidiDevice midiDevice) {
+		inputDevice = midiDevice;
+		if (!inputDevice.isOpen()) {
 			try {
-				inputPort.open();
+				inputDevice.open();
 			} catch (MidiUnavailableException e1) {
 				e1.printStackTrace();
 			}
 		}
 		try {
-			inputPort.getTransmitter().setReceiver(receiver);
+			inputDevice.getTransmitter().setReceiver(receiver);
 		} catch (MidiUnavailableException e1) {
 			e1.printStackTrace();
 		}
 	}
 
 	/**
+	 * 入力デバイス名の取得
 	 *
-	 * @param sInputPort
+	 * @return
 	 */
-	public static void setInputPort(String sInputPort) {
-		inputPort = getInputMidiDevice(sInputPort);
-		if (!inputPort.isOpen()) {
+	public static String getInputDeviceName() {
+		if (inputDevice != null) {
+			return inputDevice.getDeviceInfo().getName();
+		}
+		return "";
+	}
+
+	/**
+	 * 入力デバイス名の設定
+	 *
+	 * @param DeviceName
+	 */
+	public static void setInputDeviceName(String DeviceName) {
+		inputDevice = getInputMidiDevice(DeviceName);
+		if (!inputDevice.isOpen()) {
 			try {
-				inputPort.open();
+				inputDevice.open();
 			} catch (MidiUnavailableException e1) {
 				e1.printStackTrace();
 			}
 		}
 		try {
-			inputPort.getTransmitter().setReceiver(receiver);
+			inputDevice.getTransmitter().setReceiver(receiver);
 		} catch (MidiUnavailableException e1) {
 			e1.printStackTrace();
 		}
 	}
 
 	/**
+	 * 出力デバイスの取得
 	 *
 	 * @return
 	 */
-	public static MidiDevice getOutputPort() {
-		return outputPort;
+	public static MidiDevice getOutputDevice() {
+		return outputDevice;
 	}
 
 	/**
+	 * 出力デバイスの設定
 	 *
-	 * @param iOutputPort
+	 * @param midiDevice
 	 */
-	public static void setOutputPort(MidiDevice iOutputPort) {
-		outputPort = iOutputPort;
-		if (!outputPort.isOpen()) {
+	public static void setOutputDevice(MidiDevice midiDevice) {
+		outputDevice = midiDevice;
+		if (!outputDevice.isOpen()) {
 			try {
-				outputPort.open();
+				outputDevice.open();
 			} catch (MidiUnavailableException e1) {
 				e1.printStackTrace();
 			}
@@ -272,14 +278,30 @@ public class MidiUtil {
 	}
 
 	/**
+	 * 出力デバイス名の取得
 	 *
-	 * @param sOutputPort
+	 * @return
 	 */
-	public static void setOutputPort(String sOutputPort) {
-		outputPort = getOutputMidiDevice(sOutputPort);
-		if (!outputPort.isOpen()) {
+	public static String getOutputDeviceName() {
+		if (outputDevice != null) {
+			return outputDevice.getDeviceInfo().getName();
+		}
+		return "";
+	}
+
+	/**
+	 * 出力デバイス名の設定
+	 *
+	 * @param deviceName
+	 */
+	public static void setOutputDeviceName(String deviceName) {
+		if (outputDevice != null && outputDevice.isOpen()) {
+			outputDevice.close();
+		}
+		outputDevice = getOutputMidiDevice(deviceName);
+		if (!outputDevice.isOpen()) {
 			try {
-				outputPort.open();
+				outputDevice.open();
 			} catch (MidiUnavailableException e1) {
 				e1.printStackTrace();
 			}
@@ -287,6 +309,7 @@ public class MidiUtil {
 	}
 
 	/**
+	 * 入力メッセージの取得
 	 *
 	 * @return
 	 */
@@ -304,34 +327,7 @@ public class MidiUtil {
 	}
 
 	/**
-	 *
-	 * @return
-	 */
-	public static ShortMessage getInputShortMessage() {
-		while (!inputMessages.isEmpty()) {
-			MidiMessage midiMsg = inputMessages.poll();
-			if (midiMsg instanceof ShortMessage) {
-				return (ShortMessage) midiMsg;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 *
-	 * @return
-	 */
-	public static SysexMessage getInputSysexMessage() {
-		while (!inputMessages.isEmpty()) {
-			MidiMessage midiMsg = inputMessages.poll();
-			if (midiMsg instanceof SysexMessage) {
-				return (SysexMessage) midiMsg;
-			}
-		}
-		return null;
-	}
-
-	/**
+	 * 入力メッセージの取得
 	 *
 	 * @return
 	 */
@@ -347,23 +343,25 @@ public class MidiUtil {
 		}
 		return msg;
 	}
+
 	/**
-	 *
+	 * 終了処理
 	 */
 	public static void close() {
-		if (outputPort != null) {
-			if (outputPort.isOpen()) {
-				outputPort.close();
+		if (outputDevice != null) {
+			if (outputDevice.isOpen()) {
+				outputDevice.close();
 			}
 		}
-		if(inputPort != null) {
-			if(inputPort.isOpen()) {
-				inputPort.close();
+		if (inputDevice != null) {
+			if (inputDevice.isOpen()) {
+				inputDevice.close();
 			}
 		}
 	}
 
 	/**
+	 * メッセージ送信
 	 *
 	 * @param message
 	 */
@@ -373,6 +371,7 @@ public class MidiUtil {
 	}
 
 	/**
+	 * メッセージ送信
 	 *
 	 * @param message
 	 */
@@ -380,11 +379,10 @@ public class MidiUtil {
 		SysexMessage msg = new SysexMessage();
 		try {
 			msg.setMessage(message, message.length);
-			getOutputPort().getReceiver().send(msg, 0);
+			getOutputDevice().getReceiver().send(msg, 0);
 		} catch (InvalidMidiDataException | MidiUnavailableException e) {
 			e.printStackTrace();
 		}
 	}
-
 
 }
