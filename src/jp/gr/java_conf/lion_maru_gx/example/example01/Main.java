@@ -1,3 +1,7 @@
+/**
+ * Copyright 2018, lion-maru-gx <lion.maru.gx@gmail.com>
+ * Released under the MIT, BSD, and GPL Licenses.
+ */
 package jp.gr.java_conf.lion_maru_gx.example.example01;
 
 import java.io.FileInputStream;
